@@ -1,32 +1,21 @@
-//cd /tmp
-//wget http://project-downloads.drogon.net/files/wiringPi-1.tgz
-//tar xfz wiringPi-1.tgz
-//cd wiringPi/wiringPi
-//make
-//sudo make install
-//cd ~
-//nano blink.c
+//git clone https://github.com/WiringPi/WiringPi.git
 
-#include
-#include
+#include <stdio.h>
+#include <stdlib.h>
+#include <wiringPi.h>
 
 int main (void)
 {
   int pinIn = 20, pinOut = 21;
-  printf("Raspberry Pi delay test\n");
-
   if (wiringPiSetup() == -1) exit (1);
+  printf("Raspberry Pi delay test\n");
 
   pinMode(pinIn, INPUT);
   pinMode(pinOut, OUTPUT);
 
-  for (;;)
-  {
-    if (digitalRead(pinIn)) digitalWrite(pinOut, 1));
-    if (!digitalRead(pinIn)) digitalWrite(pinOut, 0));
-  }
+  while (1) digitalWrite(pinOut, digitalRead(pinIn));
   return 0;
 }
 
-//gcc -o blink blink.c -L/usr/local/lib -lwiringPi
-//sudo ./blink
+//gcc -o RPiDelayTest RPiDelayTest.c -lwiringPi -lm -lpththread -lcrypt -lrt
+//sudo ./RPiDelayTest
