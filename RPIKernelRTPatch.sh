@@ -1,3 +1,4 @@
+#https://www.get-edi.io/Real-Time-Linux-on-the-Raspberry-Pi/
 #host system
 sudo apt-get update
 sudo apt install build-essential bc kmod cpio flex cpio libncurses5-dev bison libssl-dev wget
