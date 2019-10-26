@@ -1,0 +1,76 @@
+/////
+Отладка
+
+при python Beremiz_service.py на хосте/таргете
+PYRO://127.0.0.1:3000 или LOCAL://
+
+Compiler: gcc
+CFLAGS:
+Linker: gcc
+LDFlAGS:
+
+/////
+Диплой
+
+при python Beremiz_service.py -p 62114 -x 0 на таргете
+PYRO://192.168.137.18:62114
+
+Compiler: arm-linux-gnueabihf-gcc
+CFLAGS: -O2
+Linker: arm-linux-gnueabihf-gcc
+LDFlAGS:
+
+/////
+Подключение wiringPi
+Project-Add-C Extension
+В папку build добавить wiringPi
+Выбрать 0.x: c_ext_0
+
+0.x: c_ext_0
+/////////////////////////////// includes section ///////////////////////////////
+#include <stdlib.h>
+#include "wiringPi/wiringPi.h"
+/////////////////////////////// globals section ////////////////////////////////
+void InitPin(int pin, int val)
+{
+    pinMode(pin, val);
+}
+void CheckPin()
+{
+    if (wiringPiSetup() == -1) exit(1);
+}
+int ReadPin(int pin)
+{
+    return digitalRead(pin);
+}
+void WritePin(int pin, int val)
+{
+    digitalWrite(pin, val);
+}
+///////////////////////////// initFunction section /////////////////////////////
+/////////////////////////// cleanUpFunction section ////////////////////////////
+/////////////////////////// retrieveFunction section ///////////////////////////
+/////////////////////////// publishFunction section ////////////////////////////
+
+
+Создаем FunctionalBlock на языке ST
+{{
+    extern int ReadPin(int);
+    extern void WritePin(int, int);
+    extern void InitPin(int, int);
+    extern void CheckPin();
+
+    CheckPin();
+    InitPin(GetFbVar(IN), 0);
+    InitPin(GetFbVar(OUT), 1);
+
+    SetFbVar(OUT, GetFbVar(IN));
+    WritePin(GetFbVar(OUT), ReadPin(GetFbVar(IN)));
+
+}}
+
+!Компиляция проекта выполняется, при диплое вылезает ошибка Undefined symbol digitalRead :
+--Попробовать собрать без флага оптимизации -O2
+--Подсунуть wiringPi.h в plc_main.c
+--Собрать на таргете
+--Проверить LD_LIBRARY_PATH
