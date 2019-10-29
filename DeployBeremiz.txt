@@ -1,20 +1,24 @@
 /////
-Отладка
+Отладка (host)
 
-при python Beremiz_service.py на хосте/таргете
+$python Beremiz_service.py
+
+Project/Config:
+
 PYRO://127.0.0.1:3000 или LOCAL://
-
 Compiler: gcc
 CFLAGS:
 Linker: gcc
 LDFlAGS:
 
 /////
-Диплой
+Диплой(target)
 
-при python Beremiz_service.py -p 62114 -x 0 на таргете
+$python Beremiz_service.py -p 62114 -x 0
+
+Project/Config:
+
 PYRO://192.168.137.18:62114
-
 Compiler: arm-linux-gnueabihf-gcc
 CFLAGS: -O2
 Linker: arm-linux-gnueabihf-gcc
@@ -22,14 +26,15 @@ LDFlAGS:
 
 /////
 Подключение wiringPi
-Project-Add-C Extension
-В папку build добавить wiringPi
+
+Project-Add-C_Extension
+
 Выбрать 0.x: c_ext_0
 
 0.x: c_ext_0
 /////////////////////////////// includes section ///////////////////////////////
 #include <stdlib.h>
-#include "wiringPi/wiringPi.h"
+#include <wiringPi.h>
 /////////////////////////////// globals section ////////////////////////////////
 void InitPin(int pin, int val)
 {
@@ -53,7 +58,9 @@ void WritePin(int pin, int val)
 /////////////////////////// publishFunction section ////////////////////////////
 
 
-Создаем FunctionalBlock на языке ST
+Создаем FunctionalBlock на языке ST с именем C_Pragma
+Добавляем 2 локальные переменные IN и OUT
+
 {{
     extern int ReadPin(int);
     extern void WritePin(int, int);
@@ -66,11 +73,15 @@ void WritePin(int pin, int val)
 
     SetFbVar(OUT, GetFbVar(IN));
     WritePin(GetFbVar(OUT), ReadPin(GetFbVar(IN)));
-
 }}
 
+Для компиляции на хосте с #include <wiringPi.h>:
+Собрать libwiringPi.so, libwiringPiDev.so на хосте и скопировать в /usr/arm-linux-gnueabihf-gcc/lib
+Скопировать wiringPi.h в /usr/arm-linux-gnueabihf-gcc/include
+Компилить с флагом -lwiringPi
+
 !Компиляция проекта выполняется, при диплое вылезает ошибка Undefined symbol digitalRead :
---Попробовать собрать без флага оптимизации -O2
---Подсунуть wiringPi.h в plc_main.c
---Собрать на таргете
---Проверить LD_LIBRARY_PATH
+На таргете отсутствует arm-linux-gnueabihf-gcc - установка невозможна
+В /usr/lib и /usr/include нужные библиотеки и хедеры есть - на #include <wiringPi.h> не ругается
+--Проверить источники инклудов
+--Попробовать добавить исходные функции в "initFunction section" раздел 0.x: c_ext_0
