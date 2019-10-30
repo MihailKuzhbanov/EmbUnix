@@ -84,4 +84,11 @@ void WritePin(int pin, int val)
 На таргете отсутствует arm-linux-gnueabihf-gcc - установка невозможна
 В /usr/lib и /usr/include нужные библиотеки и хедеры есть - на #include <wiringPi.h> не ругается
 --Проверить источники инклудов
---Попробовать добавить исходные функции в "initFunction section" раздел 0.x: c_ext_0
+--Добавить исходные функции в "initFunction section" раздел 0.x: c_ext_0
+--Собрать без флага оптимизации -O2 : не помогло
+--Подсунуть wiringPi.h в plc_main.c : ограничения на #include везде, кроме C_ext
+--Собрать на таргете : не устанавливается необходимый компилятор
+--cd ; sudo nano .bashrc ; LD_LIBRARY_PATH=/usr/lib : не помогло
+--sudo nano /etc/ls.so.conf ; cd ld.so.conf.d ; sudo nano libc.conf : не помогло
++-cd /usr/local/lib/ ; sudo cp /usr/lib/libwiringPi.so .; sudo cp /usr/lib/libwiringPiDev.so . : помогло для gcc
+Кросс компиляция на gcc -arch=arm64
