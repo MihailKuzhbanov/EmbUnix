@@ -1,37 +1,76 @@
-/////
-Отладка (host)
+_ _ _ _ _ _ _ _ _ _
 
-$python Beremiz_service.py
+На хосте
+В Beremiz
+_ _ _ _ _ _ _ _ _ _
 
-Project/Config:
+Создаем:
+-Расширение С (C_Extension)
+-FunctionalBlock (на языке ST с именем C_Pragma)
+-Program (на языке FBD с именем plc_prg)
+-Resource (с именем resource1)
 
-PYRO://127.0.0.1:3000 или LOCAL://
-Compiler: gcc
-CFLAGS:
-Linker: gcc
-LDFlAGS:
+Дерево проекта:
+-FirstProject
+--C_Pragma
+--plc_prg
+--resource1
+--0.x: c_ext_0
 
-/////
-Диплой(target)
+>Содержимое FirstProject
+Во вкладке Config:
 
-$python Beremiz_service.py -p 62114 -x 0
-
-Project/Config:
-
-PYRO://192.168.137.18:62114
+PYRO://192.168.137.233:3000
 Compiler: arm-linux-gnueabihf-gcc
-CFLAGS: -O2
+CFLAGS:
 Linker: arm-linux-gnueabihf-gcc
-LDFlAGS:
+LDFlAGS: -lwiringPi
 
-/////
-Подключение wiringPi
+>Содержимое C_Pragma
+Добавляем 2 локальные переменные IN и OUT типа Input, 1 переменную VALUE типа Output (используется для отладки)
 
-Project-Add-C_Extension
+{{
+    extern int ReadPin(int);
+    extern void WritePin(int, int);
+    extern void InitPin(int, int);
+    extern void CheckPin();
 
-Выбрать 0.x: c_ext_0
+    CheckPin();
+    InitPin(GetFbVar(IN), 0);
+    InitPin(GetFbVar(OUT), 1);
 
-0.x: c_ext_0
+    SetFbVar(VALUE, GetFbVar(OUT));                 //удалить после отладки
+    WritePin(GetFbVar(OUT), ReadPin(GetFbVar(IN)));
+}}
+
+>Содержимое plc_prg
+Добавляем в программу переменную типа C_Pragma (пользовательский блок)
+Создаем 2 переменные типа Input с именами Input (для указания входного пина) и Output (для указания выходного пина):
+
+                            C_Pragma0
+                          ______________
+ ______                  |   C_Pragma   |
+|Output| - ------------ -| OUT          |
+|______|                 |              |
+ ______                  |        VALUE | -
+|Input | - ------------ -| IN           |
+|______|                 |______________|
+
+>Содержимое resource1
+Создаем задачу, создаем экземпляр:
+
+Tasks:
+|Name       |Triggering       |Single       |Interval       |Priority
+|GetTimeSync|Cyclic           |             |T#1ms          |0
+
+Instances:
+|Name                         |Type         |Task
+|plc_task_instance            |plc_prg      |GetTimeSync
+
+>Содержимое 0.x: c_ext_0
+Во вкладке Config: LDFlAGS: -lwiringPi
+Во вкладке C code:
+_______________________________________________________________________________
 /////////////////////////////// includes section ///////////////////////////////
 #include <stdlib.h>
 #include <wiringPi.h>
@@ -56,39 +95,48 @@ void WritePin(int pin, int val)
 /////////////////////////// cleanUpFunction section ////////////////////////////
 /////////////////////////// retrieveFunction section ///////////////////////////
 /////////////////////////// publishFunction section ////////////////////////////
+_______________________________________________________________________________
 
+_ _ _ _ _ _ _ _ _ _
 
-Создаем FunctionalBlock на языке ST с именем C_Pragma
-Добавляем 2 локальные переменные IN и OUT
+На таргете
+В terminal
+_ _ _ _ _ _ _ _ _ _
+$python Beremiz_service.py -x 0
 
-{{
-    extern int ReadPin(int);
-    extern void WritePin(int, int);
-    extern void InitPin(int, int);
-    extern void CheckPin();
+*Для отладки запускать Beremiz.py и Beremiz_service.py на хосте
+Project/Config:
 
-    CheckPin();
-    InitPin(GetFbVar(IN), 0);
-    InitPin(GetFbVar(OUT), 1);
+PYRO://127.0.0.1:3000 или LOCAL://
+Compiler: gcc
+CFLAGS:
+Linker: gcc
+LDFlAGS:
 
-    SetFbVar(OUT, GetFbVar(IN));
-    WritePin(GetFbVar(OUT), ReadPin(GetFbVar(IN)));
-}}
+$python Beremiz_service.py
 
-Для компиляции на хосте с #include <wiringPi.h>:
-Собрать libwiringPi.so, libwiringPiDev.so на хосте и скопировать в /usr/arm-linux-gnueabihf-gcc/lib
-Скопировать wiringPi.h в /usr/arm-linux-gnueabihf-gcc/include
-Компилить с флагом -lwiringPi
+_______________________________________________________________________________
 
-!Компиляция проекта выполняется, при диплое вылезает ошибка Undefined symbol digitalRead :
-На таргете отсутствует arm-linux-gnueabihf-gcc - установка невозможна
-В /usr/lib и /usr/include нужные библиотеки и хедеры есть - на #include <wiringPi.h> не ругается
---Проверить источники инклудов
---Добавить исходные функции в "initFunction section" раздел 0.x: c_ext_0
---Собрать без флага оптимизации -O2 : не помогло
---Подсунуть wiringPi.h в plc_main.c : ограничения на #include везде, кроме C_ext
---Собрать на таргете : не устанавливается необходимый компилятор
---cd ; sudo nano .bashrc ; LD_LIBRARY_PATH=/usr/lib : не помогло
---sudo nano /etc/ls.so.conf ; cd ld.so.conf.d ; sudo nano libc.conf : не помогло
-+-cd /usr/local/lib/ ; sudo cp /usr/lib/libwiringPi.so .; sudo cp /usr/lib/libwiringPiDev.so . : помогло для gcc
-Кросс компиляция на gcc -arch=arm64
+Troubleshooting
+_______________________________________________________________________________
+
+!Компиляция проекта не выполняется, ошибка в строке с #include <wiringPi.h> :
+!!Данный метод устранит ошибку, но при диплое может возникнуть ошибка, описанная ниже
+Собрать библиотеку libwiringPi через ./build
+Добавить строку /usr/local/lib в файл /etc/ld.so.conf
+Выполнить sudo ldconfig
+Скопировать /WiringPi/wiringPi.h в /usr/include
+
+!Компиляция проекта выполняется, при диплое ошибка Undefined symbol $func_name :
+Собрать библиотеку libwiringPi.so на таргете и перенести ее на хост (в папку /usr/lib/gcc-cross/arm-linux-gnueabihf/7 или /usr/lib или /usr/local/lib):
+Вариант 1: через ./build в папке WiringPi
+Вариант 2: вручную через gcc (без флага -fPIC) и создать символьную ссылку (ln -sf)
+Скопировать wiringPi.h в /usr/include или /usr/arm-linux-gnueabihf/include
+
+!Компиляция проекта выполняется, при диплое ошибка ELFCLASS64 :
+Используется неверный компилятор на хосте
+
+!Поведение блоков отличается от ожидаемого :
+Некоторые блоки критичны к названиям, например:
+CounterST - работает
+Counter   - не работает
