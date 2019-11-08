@@ -16,6 +16,11 @@ from dialogs.AboutDialog import ShowAboutDialog
 
 import PLCControler as PC
 
-filepath = "/home/username/Beremiz/projects/plc.xml"
+filepathXML = "/home/username/Beremiz/NextProjectNew/plc.xml"
+filepathST = "/home/username/Beremiz/NextProjectNew/generated_plc.st"
 
-PC.GenerateProgram(filepath)
+app = PLCControler()
+app.OpenXMLFile(filepathXML)
+app.SaveXMLFile(filepathXML)
+res = app.GenerateProgram(filepathST)
+print(res[0])
