@@ -9,3 +9,4 @@ void SetComms(std::vector<int> comms, std::vector<int> level);
 void SetComms(std::vector<int> comms, int level, int delay);
 std::vector<int> GetComms(std::vector<int> comms);
 void FlipFlopPins(std::vector<int> outputs, int timeUp, int timeDown);
+void FlipFlopPins(std::vector<int>& outputs);
