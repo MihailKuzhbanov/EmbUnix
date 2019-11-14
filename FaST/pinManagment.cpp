@@ -56,3 +56,14 @@ void FlipFlopPins(std::vector<int> outputs, int timeUp, int timeDown) {
       usleep(timeDown);
     }
 }
+
+void FlipFlopPins(std::vector<int>& outputs)
+{
+  while(true) {
+    SetComms(outputs, HIGH);
+    usleep(10);
+    SetComms(outputs, LOW);
+    usleep(10);
+  }
+}
+
