@@ -13,8 +13,8 @@ int main()
   RESOURCE1_init__();
   TPort<int> tport(CHNUM);
 
-  std::thread t1(RESOURCE1_run__(), std::ref(tport));
-  std::thread t2(FlipFlopPins(outputs, HIGHTIME, LOWTIME), std::ref(tport));
+  std::thread t1(RESOURCE1_run__, std::ref(tport));
+  std::thread t2(FlipFlopPins, std::ref(tport));
   t1.join();
   t2.join();
   return EXIT_SUCCESS;
