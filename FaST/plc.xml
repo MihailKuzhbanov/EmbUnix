@@ -1,28 +1,51 @@
-<?xml version='1.0' encoding='utf-8'?>
-<project xmlns:ns1="http://www.plcopen.org/xml/tc6.xsd" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.plcopen.org/xml/tc6_0201">
-  <fileHeader companyName="Неизвестно" productName="Unnamed" productVersion="1" creationDateTime="2019-10-22T12:21:16"/>
-  <contentHeader name="Unnamed" modificationDateTime="2019-10-22T12:21:17">
-    <coordinateInfo>
-      <fbd>
-        <scaling x="0" y="0"/>
-      </fbd>
-      <ld>
-        <scaling x="0" y="0"/>
-      </ld>
-      <sfc>
-        <scaling x="0" y="0"/>
-      </sfc>
-    </coordinateInfo>
-  </contentHeader>
-  <types>
-    <dataTypes/>
-    <pous/>
-  </types>
-  <instances>
-    <configurations>
-      <configuration name="config">
-        <resource name="resource1"/>
-      </configuration>
-    </configurations>
-  </instances>
-</project>
+FUNCTION_BLOCK C_Pragma
+  VAR_INPUT
+    OUT : INT := 25;
+  END_VAR
+  VAR_OUTPUT
+    VALUE : INT := 0;
+  END_VAR
+  VAR_INPUT
+    IN : INT := 24;
+  END_VAR
+
+  {{
+      extern int GetRand();
+      extern void WritePin(int, int);
+      extern void InitPin(int, int);
+      extern void CheckPin();
+      extern int ReadPin(int);
+      
+      CheckPin();
+      InitPin(24, 0);
+      InitPin(25, 1);
+      
+      //SetFbVar(OUT, GetFbVar(IN));
+      WritePin(25, ReadPin(24));
+      //SetFbVar(ReadPin(24));
+  }}
+END_FUNCTION_BLOCK
+
+PROGRAM plc_prg
+  VAR_INPUT
+    Input : INT := 24;
+    Output : INT := 25;
+  END_VAR
+  VAR
+    C_Pragma0 : C_Pragma;
+  END_VAR
+
+  C_Pragma0(OUT := Output, IN := Input);
+END_PROGRAM
+
+
+CONFIGURATION config
+  VAR_GLOBAL CONSTANT
+    ResetCounterValue : INT := 17;
+  END_VAR
+
+  RESOURCE resource1 ON PLC
+    TASK GetTimeSync(INTERVAL := T#0.5ms,PRIORITY := 0);
+    PROGRAM plc_task_instance WITH GetTimeSync : plc_prg;
+  END_RESOURCE
+END_CONFIGURATION
